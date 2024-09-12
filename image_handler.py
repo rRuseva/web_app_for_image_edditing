@@ -5,11 +5,9 @@ import numpy as np
 import pandas as pd
 import matplotlib
 matplotlib.use('Agg')
-from matplotlib import pyplot as plt
 import pydicom as dicom
 from io import BytesIO
-import preprocessing as pr 
-import computation 
+import preprocessing as pr
 
 def validate_is_dicom(file_content: bytes) -> bool:
     """Gets a byte type object and checks if the content from position 128 till 132 
