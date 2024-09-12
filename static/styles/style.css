@@ -30,3 +30,8 @@ img {
     padding: 5px;
     width: 150px;
 }
+
+.col-sm-4 img, .col-sm-4 h5 {
+    text-align: center;
+    display: block;
+}
