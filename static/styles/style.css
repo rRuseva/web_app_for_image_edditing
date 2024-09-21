@@ -27,7 +27,7 @@ input, button {
 img {
     max-width: 100%;
     height: auto;
-    border: 1px solid #ddd;
+    border: 1px solid #606060;
     border-radius: 10px;
     padding: 5px;
     min-width: 150px;
@@ -36,10 +36,11 @@ img {
 .col-sm-4 img, .col-sm-4 h5 {
     text-align: center;
     display: block;
+    font-style: italic;
 }
 
 .container.gallery-container {
-    background-color: #fff;
+    background-color: #E0E0E0;
     color: #35373a;
     min-height: 100vh;
     border-radius: 20px;
