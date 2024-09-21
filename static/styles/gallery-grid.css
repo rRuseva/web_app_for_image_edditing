@@ -1,41 +1,9 @@
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
 body {
-    padding: 2rem;
-    background-color: #333;
-    color: whitesmoke;
+    background-image: linear-gradient(to top, #ecedee 0%, #eceeef 75%, #e7e8e9 100%);
     min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2rem;
-    /* font-size: 2rem; */
-    /* background-image: linear-gradient(to top, #ecedee 0%, #eceeef 75%, #e7e8e9 100%); */
-
-}
-
-input, button {
-    font-size: 2rem;
-    /* padding: 1rem; */
-    border-radius: 10px;
-}
-
-img {
-    max-width: 100%;
-    height: auto;
-    border: 1px solid #ddd;
-    border-radius: 10px;
-    padding: 5px;
-    min-width: 150px;
-}
-
-.col-sm-4 img, .col-sm-4 h5 {
-    text-align: center;
-    display: block;
+    font: normal 16px sans-serif;
+    padding: 60px 0;
+    background-color: #333;
 }
 
 .container.gallery-container {
