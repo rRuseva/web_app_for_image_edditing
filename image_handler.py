@@ -121,10 +121,12 @@ def process_image(filename, image_directory, results_directory):
     original_image, image_name, image_ext, image_type = open_image_file(filename, image_directory)
     
     print("Processing: {} - {} - {}".format(image_name, original_image.shape, image_type))
+    
     if image_type != "MONOCHROME2":
         grey_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2GRAY)
     else:
         grey_image = original_image
+		original_image = cv2.cvtColor(original_image, cv2.COLOR_GRAY2BGR)
 
     original_image_width = grey_image.shape[1]
     original_image_height = grey_image.shape[0]
@@ -139,7 +141,8 @@ def process_image(filename, image_directory, results_directory):
 
     grey_image = cv2.resize(grey_image, (image_width,image_height), interpolation = cv2.INTER_AREA)
     image = cv2.resize(original_image, (image_width,image_height)  , interpolation = cv2.INTER_AREA)
-    print("scale ratio: {} \nnew image size: {}-{}".format(scale_ratio, image_width, image_height))
+    print("Scale ratio: {} \nNew image size: {}-{}".format(scale_ratio, image_width, image_height))
+
     cv2.imwrite(os.path.join(results_directory,"{}_00-original_image.{}".format(str(image_name),str(image_ext))), image)
 
 
@@ -312,7 +315,7 @@ def process_image(filename, image_directory, results_directory):
             end_line_image3=cv2.line(end_line_image3,(x1, y1), (x2, y2), (0,0,255), 1)
     
     cv2.imwrite(os.path.join(results_directory,"{}_13-smoothed-2_{}.{}".format(str(image_name),str(alpha),str(image_ext))), end_line_image3)
-    
+
 
 
 
@@ -400,7 +403,6 @@ def process_image(filename, image_directory, results_directory):
     plt.legend(loc="best", fancybox=True, shadow=True)
     plt.savefig(os.path.join(results_directory,"{}_14-tangents.{}".format(str(image_name),"png")))
     plt.clf()
-
 
 if __name__ == '__main__':
     pass

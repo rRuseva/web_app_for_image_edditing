@@ -15,7 +15,7 @@ def compute_cob_angles(points, xb, xe, spline_degree = 5):
 		spline_degree (int, optional): degree of the B-spline. Defaults to 5.
 	"""
       
-	print(f"Computing cob angle " ) # with step_height = {step_height}")
+	print(f"Computing Cob angle ...")
 	ys = [int(points['x'][i]) for i in points.index]
 	# step_height = 5
 	# xs = [i * step_height for i in range(len(ys))]
@@ -23,17 +23,17 @@ def compute_cob_angles(points, xb, xe, spline_degree = 5):
 	n = len(ys)
 
 	smoothing = n - math.sqrt(2 * n)
-	print(f"N - number of data points: {n}")
+	print(f"Number of data points: {n}")
 
-	# ### defining spine curvature as B-spline objects - smoothing condition
+	# ### defining B-spline representation fo central line points representing the spine curve
 	# k = the degree of the spline; 
 	# xb, xe - the interval to fit
 	spine_curve = splrep(xs, ys, k=spline_degree, s=smoothing, xb=xb, xe=xe)
 
-	# defining first derivative of the slpine representation of the spine curve 
+	# defining first derivative equation of the spline representation of the spine curve 
 	spine_der = splder(spine_curve)
 
-	# ### construct evenly spaced samples, calculated over the interval for displaying b-spline curve
+	# construct evenly spaced samples, calculated over the interval for displaying b-spline curve
 	xx, xx_step = np.linspace(xs[0], xs[-1], xs[-1]-xs[0], retstep=True)
 	print(f"xx_step: {xx_step}")
 
@@ -77,7 +77,7 @@ def compute_cob_angles(points, xb, xe, spline_degree = 5):
 				angles.append(((x_1, y_1, slope_1, c_1), (x_2, y_2, slope_2, c_2), angle_rad))
 
 		print(f"found {len(angles)} angles ")
-		if len(angles)>0:
+		if len(angles) > 0:
 			max_angle = max(angles, key=lambda x: x[-1])
 
 		y_min_1 = point_eq(min_x, max_angle[0][2], max_angle[0][3])
@@ -100,10 +100,10 @@ def compute_cob_angles(points, xb, xe, spline_degree = 5):
 		b_x = max_angle[1][0]
 		b_y = max_angle[1][1]
 		line_2 = [b_x, b_y, max_x, point_eq(max_x, max_angle[1][2], max_angle[1][3] )]
-		max_angles_2.append((rad_to_deg(max_angle[-1]), line_1, line_2, (extremums_x[k], extremums_y[k]) ) )
+		max_angles_2.append( (rad_to_deg(max_angle[-1]), line_1, line_2, (extremums_x[k], extremums_y[k]) ) )
 
 	for ma in max_angles:
-		print(f"max angle: {ma[0]} = {ma[1]} \N{DEGREE SIGN}C")     
+		print(f"Max angle: {ma[0]} = {ma[1]} \N{DEGREE SIGN}C")     
 
 	return(xx, yy, extremums_x, extremums_y, lines_1, lines_2, max_angles, max_angles_2)
 	# fig, ax = plt.subplots()
@@ -169,6 +169,7 @@ def point_eq(x: int, slope: np.ndarray, coef: np.float64) -> np.float64:
 	"""
     return slope*x + coef
 
+
 def rad_to_deg(x: float) -> float:
     """Convert radians into degrees
 
@@ -199,3 +200,68 @@ def compute_angle_from_slopes(ma: np.ndarray, mb: np.ndarray, in_rad: bool) -> f
     
     return angle_rad
 
+
+def find_central_line(spine_crop):
+	image_h, image_w = spine_crop.shape
+	window_w = 60
+	# window_w = int(image_w*0.33)
+	window_h = 10
+	step_w = 1
+	step_h = 5
+	c_y = c_x = 0
+	central_line_points = []
+	i = 0
+	while c_y < image_h - window_h:
+		max_sum = max_sum = (0, 0, 0)
+		c_x = 0
+		while c_x < image_w - window_w:
+			roi = spine_crop[c_y:c_y+window_h, c_x:c_x+window_w]
+			current_sum  = np.sum(roi)
+			if max_sum[0] < current_sum:
+				curr_x = c_x+window_w//2
+				
+				max_sum = (current_sum, curr_x, c_y)
+			c_x += step_w
+		central_line_points.append((max_sum[1],max_sum[2]))
+		c_y += step_h
+	return central_line_points
+
+
+def refine_central_line(central_line_points, epsilon):
+	central_line_points_processed = []
+	# prev_x = image_width//2
+	prev_x = central_line_points[0][0]
+	central_line_points_processed.append((prev_x, central_line_points[0][1]))
+	i = 1
+	for point in central_line_points[1:]:
+		curr_x = point[0]
+		curr_y = point[1]
+		prev_point = central_line_points[i-1]
+
+		diff = curr_x - prev_x
+		if abs(diff) > epsilon:
+			# curr_x = curr_x + diff//2
+			curr_x = prev_x
+		point = (curr_x, point[1])
+		central_line_points_processed.append(point)
+		i += 1
+		prev_x = curr_x
+
+	return central_line_points_processed
+
+@dataclass
+class Point:
+	x: float
+	y: float
+
+@dataclass
+class Line:
+	a: Point
+	b: Point
+
+@dataclass
+class CobAngle:
+	line_a: Line
+	line_b: Line
+	apex: Point
+	measure: float
