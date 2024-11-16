@@ -27,8 +27,13 @@ def validate_is_dicom(file_content: bytes) -> bool:
 
 
 def save_dicom(file_name: str, file_content: bytes) -> None:
+    """Gets the uploaded byte type object and after anonymising it saves it as DICOM image with the given filename.
+
+    Args:
+        file_name (str): file name
+        file_content (bytes): image content
+    """
     print("Saving file content as DICOM file ...")
-    print(type(file_content))
     dataset = dicom.dcmread(BytesIO(file_content))
     print(dataset.is_implicit_VR)
     
@@ -39,7 +44,15 @@ def save_dicom(file_name: str, file_content: bytes) -> None:
     dicom.dcmwrite(filename=file_name, dataset=dataset, write_like_original=True)
 
 
-def anonymise_dicom_data(dataset: dicom.FileDataset) ->  None:
+def anonymise_dicom_data(dataset: dicom.FileDataset) ->  dicom.FileDataset:
+    """Deletes sensitive data from DICOM type files to protect patient personal information.
+
+    Args:
+        dataset (dicom.FileDataset): Given DICOM image
+
+    Returns:
+        dicom.FileDataset: Same data set as the given one, but without Pattion information as ID, Name, Sex, Age and birthdate
+    """
     print("Anonymise DICOM data ...")
     dataset.PatientID = None
     dataset.PatientName = None
@@ -106,19 +119,20 @@ def open_image_file(filename, image_directory):
         image_type =  ds.PhotometricInterpretation		# usually dicom x-ray is MONOCHROME2
         if ds.pixel_array.any():
             ### convert byte raw image data into uint8 in range [0,255]
-            print(f"Converting byte raw data from dicom into uint8")
+            print("Converting byte raw data from dicom into uint8")
             image_data = ds.pixel_array - np.min(ds.pixel_array)
             image_data = image_data / np.max(image_data)
             image_data = (image_data * 255).astype(np.uint8)        
 
     if image_data.any():
-        print(f"image data: {image_data}")
+        # print(f"image data: {image_data}")
         return (image_data, image_name, image_ext, image_type)
     else:
-        print(f"image data is missing")
+        print("Image data is missing")
 
 
-def process_image(filename, image_directory, results_directory):
+def process_image(filename, image_directory, results_directory) -> list:
+    result = []
     original_image, image_name, image_ext, image_type = open_image_file(filename, image_directory)
     
     print("Processing: {} - {} - {}".format(image_name, original_image.shape, image_type))
@@ -147,7 +161,7 @@ def process_image(filename, image_directory, results_directory):
     cv2.imwrite(os.path.join(results_directory,"{}_00-original_image.{}".format(str(image_name),str(image_ext))), image)
     
     
-    ### auto image enhancment for improving brightness and contrast - histogram strching
+    ### auto image enhancement for improving brightness and contrast - histogram stretching
     ### not enough
     clip_hist_percent = 15
     enh_image, alpha, beta = pr.automatic_brightness_and_contrast(grey_image, clip_hist_percent=clip_hist_percent)
@@ -165,7 +179,7 @@ def process_image(filename, image_directory, results_directory):
     spine_start, spine_end, col_values, min_max_row = pr.detect_spine(enh_image, sum_col, sum_row)
     print("Cropped pos: {}-{}".format(spine_start, spine_end))
 
-    ### Plot  intensity projection histograms and detected spine ROI
+    ### Plot intensity projection histograms and detected spine ROI
     fig = plt.figure()
     plt.suptitle("Intensity projection")
     ax1 = fig.add_subplot(121)
@@ -238,7 +252,7 @@ def process_image(filename, image_directory, results_directory):
     cv2.imwrite(os.path.join(results_directory,"{}_10-clp-{}.{}".format(str(image_name),str(epsilon),str(image_ext))), image_clp)
 
 
-    ### Convert data from central line points to pandas dataframe and applay ewm (exponentially weighted moving) smoothing
+    ### Convert data from central line points to pandas dataframe and apply ewm (exponentially weighted moving) smoothing
     df = pd.DataFrame(central_line_points_processed, columns =['x', 'y'])
 
     alpha = 0.1		# smoothing factor; higher value means less weight to recent observations
@@ -278,6 +292,7 @@ def process_image(filename, image_directory, results_directory):
     for ma in max_angles:
         print(f"Max angle at apex: ({ma.apex.y}, {ma.apex.x}) - {ma.measure}\N{DEGREE SIGN}C")
     # results[image_name] = [ma.measure for ma in max_angles]
+    result = [(ma.apex.y, ma.apex.x, ma.measure) for ma in max_angles]
 
     # Draw spine curve
     end_line_image = spine_crop.copy()
@@ -291,7 +306,7 @@ def process_image(filename, image_directory, results_directory):
     for i in range(len(extremums_x)):
         x = int(extremums_y[i])
         y = int(extremums_x[i])
-        end_line_image = cv2.circle(end_line_image, (x, y), 4, (0,255,255), 2) # yallow
+        end_line_image = cv2.circle(end_line_image, (x, y), 4, (0,255,255), 2) # yellow
         
     cv2.imwrite(os.path.join(results_directory,"{}_14-apices_{}.{}".format(str(image_name),str(alpha),str(image_ext))), end_line_image)
     
@@ -301,14 +316,14 @@ def process_image(filename, image_directory, results_directory):
     color_list_1 = ['red', 'green', 'gold', 'cyan', 'dodgerblue', 'violet', 'tomato']
     color_list_1 += color_list_1
     
-    # plt.scatter(xs, ys, **{"color": "cyan", "marker": "."}, label="original")
+    # plt.scatter(ys, xs, **{"color": "cyan", "marker": "."}, label="original")
     plt.scatter(
         extremums_y, extremums_x, **{"color": "orange", "marker": "o"}, label="Extremums"
     )
-    plt.plot(yy, xx, **{"color": "blue", "ls": "-"}, label="B-spline")
+    plt.plot(yy, xx, **{"color": "blue", "ls": "-"}, label="Spine curve")
 
 
-    # Draw tangent lines and angle degrees over croped spine image
+    # Draw tangent lines and angle degrees over cropped spine image
     end_line_image5 = end_line_image.copy()
     # BGR: rgb - cmyk
     colors=((0,0,255), (0,255,255), (255,0,255), (0,0,125), (0,0,255), (255,0,255), (0,255,255), (0,0,125))
@@ -352,6 +367,7 @@ def process_image(filename, image_directory, results_directory):
     # plt.show()
 
     print("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ")
+    return result
 
 if __name__ == '__main__':
     pass

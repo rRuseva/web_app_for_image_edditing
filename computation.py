@@ -45,7 +45,7 @@ class CobAngle:
 
 
 @dataclass
-class AngleBtweenTangents:
+class AngleBetweenTangents:
 	point_a: Point
 	t_line_a: TangentLine
 	point_b: Point
@@ -59,10 +59,10 @@ def compute_cob_angles(points: list, xb, xe, spline_degree = 5):
 	Args:
 		points (list[Point]): list of central line points to be fitted into a curve
 		xb (float): lower limit
-		xe (flloat): uppert limit 
+		xe (float): upper limit 
 		spline_degree (int, optional): degree of the B-spline. Defaults to 5.
 	"""
-	print(f"Computing Cob angle ...")
+	print("Computing Cob angle ...")
 
 	# Swap x and y coordinates
 	ys = [int(points['x'][i]) for i in points.index]
@@ -71,7 +71,7 @@ def compute_cob_angles(points: list, xb, xe, spline_degree = 5):
 
 	smoothing = n - math.sqrt(2 * n)
 
-	print(f"Number of data points: {n}")
+	# print(f"Number of data points: {n}")
 
 	# ### Define B-spline representation of central line points representing the spine curve
 	# k = the degree of the spline; 
@@ -87,10 +87,10 @@ def compute_cob_angles(points: list, xb, xe, spline_degree = 5):
 	yy = splev(xx, spine_curve)  # splev Evaluate the B-spline over xx for displaying
 	yy1 = splev(xx, spine_der)  # splev Evaluate the B-spline first order derivative over xx for displaying
 
-	# ### Find the local extermums (minimums and maximums) of the spine curve, by constructing piecewise polinimial from the
+	# ### Find the local extremums (minimums and maximums) of the spine curve, by constructing piecewise polinomial from the
 	# B-spline object of the first derivative and evaluating its roots
 	ppoly = PPoly.from_spline(spine_der)
-	# discontinuity - wheather to report sign changes accros discontinuities at breakpoints as roots
+	# discontinuity - whether to report sign changes across discontinuities at breakpoints as roots
 	# extrapolate - whether to return roots from polynomial extrapolated based on first and last intervals
 	extremums_x = ppoly.roots(discontinuity=False, extrapolate=False)
 
@@ -99,8 +99,8 @@ def compute_cob_angles(points: list, xb, xe, spline_degree = 5):
 	
 	extremums_y = splev(extremums_x, spine_curve)
 	print(f"Number of extremums: ({extremums_x.shape[0]}, {extremums_y.shape[0]})")
-	print(f"extremums x: \n{extremums_x}")
-	print(f"extremums y: \n{extremums_y}")
+	# print(f"extremums x: \n{extremums_x}")
+	# print(f"extremums y: \n{extremums_y}")
 
 	len_extremums = len(extremums_x)
 	max_angles = []
@@ -127,9 +127,9 @@ def compute_cob_angles(points: list, xb, xe, spline_degree = 5):
 				# angle: ( (x1,y1, slope1, c1), (x2,y2, slope2, c2), radian)
 				# angles.append(((x_1, y_1, slope_1, c_1), (x_2, y_2, slope_2, c_2), angle_rad))  
 				angle_rad = compute_angle_from_slopes(t_line_1.slope, t_line_2.slope, in_rad=True)
-				angles.append( AngleBtweenTangents(point_1, t_line_1, point_2, t_line_2, angle_rad) )
+				angles.append(AngleBetweenTangents(point_1, t_line_1, point_2, t_line_2, angle_rad) )
 
-		print(f"For extremum[{k}] found {len(angles)} angles")
+		# print(f"For extremum[{k}] found {len(angles)} angles")
 		if len(angles) > 0:
 			max_angle = max(angles, key=lambda x: x.measure)
 			print(f"For extremum[{k}] max angle is: {max_angle}")
@@ -171,7 +171,7 @@ def compute_cob_angles(points: list, xb, xe, spline_degree = 5):
 
 def tangent_line(curve_derivative: tuple, point: Point) -> tuple[np.ndarray, np.float64]:
     """Computes the slope and the coefficient of the tangent line at given point.
-    The tangent line at certan point can be described with its slope and coefficient, this commint from the line equation: 
+    The tangent line at certain point can be described with its slope and coefficient, this coming from the line equation: 
     y = slope * x + coefficient 
     Where the slope can be derived from the first order derivative of the curve at this point: slope = curve derivative at point x
     Therefor the coefficient = y - slope * x
@@ -238,10 +238,10 @@ def compute_angle_from_slopes(ma: np.ndarray, mb: np.ndarray, in_rad: bool) -> f
 def find_central_line(spine_crop: np.ndarray) : #-> list[Point]:
 	# Slide a window with size (window_w, window_h) over the image with horizontal step step_w
 	# and vertical step step_h. At each step calculate the sum of pixel intensities. 
-	# At each row identify the window with tha maximimum sum and save the central point.
+	# At each row identify the window with tha maximum sum and save the central point.
 	# Return: List with all central points
 
-	print(f"Finding central line points...")
+	print("Finding central line points...")
 	# print(f"spine crop type: {type(spine_crop)}")
 	image_h, image_w = spine_crop.shape
 	window_w = 60
